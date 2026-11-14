@@ -1,0 +1,126 @@
+{
+  "accepted_document_error_rate": 0.0,
+  "accepted_document_errors": 0,
+  "accepted_field_error_rate": 0.0,
+  "accepted_field_errors": 0,
+  "accepted_fields": 260,
+  "all_field_errors": 11,
+  "applicants": 30,
+  "calibrated": false,
+  "decision_date": "2026-01-01",
+  "documents": 90,
+  "fields": {
+    "address_proof.address": {
+      "accepted_errors": 0,
+      "accepted_total": 17,
+      "accuracy": 0.833333,
+      "correct": 25,
+      "total": 30
+    },
+    "address_proof.issue_date": {
+      "accepted_errors": 0,
+      "accepted_total": 17,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30
+    },
+    "address_proof.name": {
+      "accepted_errors": 0,
+      "accepted_total": 17,
+      "accuracy": 0.933333,
+      "correct": 28,
+      "total": 30
+    },
+    "address_proof.pincode": {
+      "accepted_errors": 0,
+      "accepted_total": 17,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30
+    },
+    "id_card.address": {
+      "accepted_errors": 0,
+      "accepted_total": 22,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30
+    },
+    "id_card.dob": {
+      "accepted_errors": 0,
+      "accepted_total": 22,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30
+    },
+    "id_card.gender": {
+      "accepted_errors": 0,
+      "accepted_total": 22,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30
+    },
+    "id_card.id_number": {
+      "accepted_errors": 0,
+      "accepted_total": 22,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30
+    },
+    "id_card.name": {
+      "accepted_errors": 0,
+      "accepted_total": 22,
+      "accuracy": 0.966667,
+      "correct": 29,
+      "total": 30
+    },
+    "id_card.pincode": {
+      "accepted_errors": 0,
+      "accepted_total": 22,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30
+    },
+    "pan.dob": {
+      "accepted_errors": 0,
+      "accepted_total": 15,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30
+    },
+    "pan.father_name": {
+      "accepted_errors": 0,
+      "accepted_total": 15,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30
+    },
+    "pan.name": {
+      "accepted_errors": 0,
+      "accepted_total": 15,
+      "accuracy": 0.9,
+      "correct": 27,
+      "total": 30
+    },
+    "pan.pan_number": {
+      "accepted_errors": 0,
+      "accepted_total": 15,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30
+    }
+  },
+  "limitations": [
+    "Same-template synthetic smoke test; not held-out calibration or bank approval evidence.",
+    "Full IDs compared via private in-memory hashes; reports contain aggregate counts only.",
+    "Document ok means extraction gating, never verified identity or credit approval."
+  ],
+  "noisy_documents": 36,
+  "provider": "FakeProvider",
+  "reviewed_documents_without_observed_field_errors": 26,
+  "statuses": {
+    "needs_review": 36,
+    "ok": 54
+  },
+  "threshold": 0.8,
+  "zero_error_one_sided_95pct_upper_bound": 0.05396576709737633
+}

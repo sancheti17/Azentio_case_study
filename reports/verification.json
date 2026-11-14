@@ -1,0 +1,11 @@
+{
+  "cli_api_audit": "covered by tests",
+  "generator": "90 docs,36 noisy; all91 files byte-identical for repeated seed42 run",
+  "git": "Dulwich repository; source, tests, data and reports committed; wheelhouse included but ignored",
+  "network": "outbound IPv4/IPv6 blocked in tests",
+  "offline_install": "passed (--no-index from bundled wheelhouse; package and test extras)",
+  "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.44",
+  "provider": "FakeProvider",
+  "pytest": "64 passed",
+  "python": "3.13.18"
+}

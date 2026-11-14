@@ -1,0 +1,46 @@
+[
+  {
+    "threshold": 0.0,
+    "statuses": {
+      "needs_review": 36,
+      "ok": 54
+    },
+    "accepted_fields": 260,
+    "accepted_field_errors": 0,
+    "accepted_document_errors": 0,
+    "accepted_document_error_rate": 0.0
+  },
+  {
+    "threshold": 0.8,
+    "statuses": {
+      "needs_review": 36,
+      "ok": 54
+    },
+    "accepted_fields": 260,
+    "accepted_field_errors": 0,
+    "accepted_document_errors": 0,
+    "accepted_document_error_rate": 0.0
+  },
+  {
+    "threshold": 0.9,
+    "statuses": {
+      "needs_review": 36,
+      "ok": 54
+    },
+    "accepted_fields": 260,
+    "accepted_field_errors": 0,
+    "accepted_document_errors": 0,
+    "accepted_document_error_rate": 0.0
+  },
+  {
+    "threshold": 1.0,
+    "statuses": {
+      "needs_review": 36,
+      "ok": 54
+    },
+    "accepted_fields": 260,
+    "accepted_field_errors": 0,
+    "accepted_document_errors": 0,
+    "accepted_document_error_rate": 0.0
+  }
+]
