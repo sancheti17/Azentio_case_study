@@ -1,13 +1,24 @@
-"""Reproducible synthetic data; never derives IDs or names from real records."""
+"""Reproducible synthetic KYC data; never derives identities from real records."""
 import argparse
 import json
 import math
 import random
 from datetime import date, timedelta
 from pathlib import Path
+from .config import EVALUATION_AS_OF
 from .rules import verhoeff_digit
 
 MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split()
+SCENARIOS = {
+    0: ["NAME_MISMATCH"],
+    1: ["DOB_MISMATCH"],
+    2: ["PAN_SURNAME_INITIAL_MISMATCH"],
+    3: ["ADDRESS_PROOF_STALE"],
+    4: ["NAME_MISMATCH", "DOB_MISMATCH"],
+    5: ["NAME_MISMATCH", "PAN_SURNAME_INITIAL_MISMATCH"],
+    6: ["DOB_MISMATCH", "ADDRESS_PROOF_STALE"],
+    7: ["PAN_SURNAME_INITIAL_MISMATCH", "ADDRESS_PROOF_STALE"],
+}
 
 
 def _letters(number: int) -> str:
@@ -33,31 +44,45 @@ def generate(applicants: int, seed: int, out: str | Path) -> list[dict]:
         raise ValueError("applicants must be positive")
     destination = Path(out)
     destination.mkdir(parents=True, exist_ok=True)
-    # Never silently overwrite existing work, nor leave stale documents.
     if any(destination.iterdir()):
         raise FileExistsError("Output directory must be empty")
     rng = random.Random(seed)
+    as_of = date.fromisoformat(EVALUATION_AS_OF)
     n_docs = 3 * applicants
     noisy_indices = set(rng.sample(range(n_docs), math.ceil(n_docs * 0.4)))
-    rows = []
+    rows, applicant_rows = [], []
     for i in range(applicants):
         suffix = _letters(i)
-        # Artificial tokens, not plausible real people's identities.
+        # All names and document values are conspicuously synthetic.
         name = f"SPECIMEN NEXORA {suffix}"
         father = f"SPECIMEN PARENT {suffix}"
         dob = (date(1965, 1, 1) + timedelta(days=rng.randrange(15000))).isoformat()
-        pan = "SYNPT" + f"{rng.randrange(10000):04d}" + chr(65 + i % 26)
+        # 4th character is P; 5th character matches the final name token initial.
+        pan = "SYNP" + suffix[0] + f"{rng.randrange(10000):04d}" + chr(65 + i % 26)
         prefix = str(rng.randrange(2)) + f"{rng.randrange(10**10):010d}"
         id_number = prefix + verhoeff_digit(prefix)
         address = f"{i+1} MODEL AVENUE, TEST NAGAR, SYNTHETIC CITY"
         pincode = str(rng.randrange(100000, 1000000))
-        issue_date = (date(2024, 1, 1) + timedelta(days=rng.randrange(300))).isoformat()
+        # Clean evidence is current as of the fixed date; seeded stale cases are changed below.
+        issue_date = (as_of - timedelta(days=rng.randrange(0, 91))).isoformat()
         documents = {
             "pan": {"name":name, "father_name":father, "dob":dob, "pan_number":pan},
             "id_card": {"name":name, "dob":dob, "gender":rng.choice(["MALE", "FEMALE", "OTHER"]),
                         "id_number":id_number, "address":address, "pincode":pincode},
             "address_proof": {"name":name, "address":address, "pincode":pincode, "issue_date":issue_date},
         }
+        expected = list(SCENARIOS.get(i, []))
+        if "NAME_MISMATCH" in expected:
+            documents["address_proof"]["name"] = f"SPECIMEN ALTERED {suffix}"
+        if "DOB_MISMATCH" in expected:
+            documents["id_card"]["dob"] = (date.fromisoformat(dob) + timedelta(days=1)).isoformat()
+        if "PAN_SURNAME_INITIAL_MISMATCH" in expected:
+            wrong = "Z" if pan[4] != "Z" else "Y"
+            documents["pan"]["pan_number"] = pan[:4] + wrong + pan[5:]
+        if "ADDRESS_PROOF_STALE" in expected:
+            documents["address_proof"]["issue_date"] = (as_of - timedelta(days=91 + i)).isoformat()
+        applicant_rows.append({"applicant_id":f"app_{i+1:04d}", "as_of":EVALUATION_AS_OF,
+                               "expected_reason_codes":sorted(expected)})
         for kind, truth in documents.items():
             index = len(rows)
             doc_id = f"app_{i+1:04d}_{kind}"
@@ -69,20 +94,16 @@ def generate(applicants: int, seed: int, out: str | Path) -> list[dict]:
                     visible[key] = _display_date(visible[key], index)
             noise_types = []
             if index in noisy_indices:
-                # A genuine O/0 or I/1 corruption on every noisy document.
                 target = "pan_number" if kind == "pan" else "id_number" if kind == "id_card" else "pincode"
                 old = visible[target]
                 positions = [j for j, c in enumerate(old) if c in "01OI"]
                 if positions:
-                    j = rng.choice(positions)
-                    c = {"0":"O", "1":"I", "O":"0", "I":"1"}[old[j]]
-                    visible[target] = old[:j] + c + old[j+1:]
-                else:
-                    # Preserve truth; apply a text-field confusable when no digit eligible.
-                    visible["address"] = visible.get("address", address).replace("MODEL", "M0DEL")
-                noise_types = ["confusable_swap", "line_shuffle", "header_footer", "mixed_date_format"]
-                # Unrecoverable-but-plausible OCR corruption illustrates why a
-                # source match is not proof of correctness (evaluation measures it).
+                    pos = positions[0]
+                    visible[target] = old[:pos] + {"0":"O", "1":"I", "O":"0", "I":"1"}[old[pos]] + old[pos+1:]
+                noise_types.append("confusable_swap")
+                noise_types.append("line_shuffle")
+                noise_types.append("header_footer")
+                noise_types.append("mixed_date_format")
                 if index % 7 == 0:
                     visible["name"] = visible["name"].replace("NEXORA", "NEX0RA")
                     noise_types.append("text_confusable")
@@ -94,8 +115,10 @@ def generate(applicants: int, seed: int, out: str | Path) -> list[dict]:
             (destination / f"{doc_id}.txt").write_bytes(content.encode("utf-8"))
             rows.append({"doc_id":doc_id, "applicant_id":f"app_{i+1:04d}", "doc_type":kind,
                          "fields":truth, "noisy":bool(noise_types), "noise_types":noise_types})
-    payload = "".join(json.dumps(row, sort_keys=True, ensure_ascii=True) + "\n" for row in rows)
-    (destination / "labels.jsonl").write_bytes(payload.encode("utf-8"))
+    labels_payload = "".join(json.dumps(row, sort_keys=True, ensure_ascii=True) + "\n" for row in rows)
+    applicants_payload = "".join(json.dumps(row, sort_keys=True, ensure_ascii=True) + "\n" for row in applicant_rows)
+    (destination / "labels.jsonl").write_bytes(labels_payload.encode("utf-8"))
+    (destination / "applicants.jsonl").write_bytes(applicants_payload.encode("utf-8"))
     return rows
 
 

@@ -3,8 +3,8 @@
   "accepted_document_errors": 0,
   "accepted_field_error_rate": 0.0,
   "accepted_field_errors": 0,
-  "accepted_fields": 260,
-  "all_field_errors": 11,
+  "accepted_fields": 280,
+  "all_field_errors": 5,
   "applicants": 30,
   "calibrated": false,
   "chosen_threshold": 0.5,
@@ -18,16 +18,16 @@
   "error_breakdown": {
     "missing": 0,
     "provider_failed": 0,
-    "rule_failed": 11,
-    "total_field_errors": 11,
+    "rule_failed": 5,
+    "total_field_errors": 5,
     "wrong_value": 0
   },
   "evaluation_as_of": "2026-11-14",
   "field_accuracy": {
     "address_proof": {
       "address": {
-        "accuracy": 0.833333,
-        "correct": 25,
+        "accuracy": 1.0,
+        "correct": 30,
         "total": 30
       },
       "issue_date": {
@@ -36,8 +36,8 @@
         "total": 30
       },
       "name": {
-        "accuracy": 0.933333,
-        "correct": 28,
+        "accuracy": 0.966667,
+        "correct": 29,
         "total": 30
       },
       "pincode": {
@@ -79,8 +79,8 @@
       }
     },
     "overall": {
-      "accuracy": 0.97381,
-      "correct": 409,
+      "accuracy": 0.988095,
+      "correct": 415,
       "total": 420
     },
     "pan": {
@@ -109,28 +109,28 @@
   "fields": {
     "address_proof.address": {
       "accepted_errors": 0,
-      "accepted_total": 17,
-      "accuracy": 0.833333,
-      "correct": 25,
+      "accepted_total": 20,
+      "accuracy": 1.0,
+      "correct": 30,
       "total": 30
     },
     "address_proof.issue_date": {
       "accepted_errors": 0,
-      "accepted_total": 17,
+      "accepted_total": 20,
       "accuracy": 1.0,
       "correct": 30,
       "total": 30
     },
     "address_proof.name": {
       "accepted_errors": 0,
-      "accepted_total": 17,
-      "accuracy": 0.933333,
-      "correct": 28,
+      "accepted_total": 20,
+      "accuracy": 0.966667,
+      "correct": 29,
       "total": 30
     },
     "address_proof.pincode": {
       "accepted_errors": 0,
-      "accepted_total": 17,
+      "accepted_total": 20,
       "accuracy": 1.0,
       "correct": 30,
       "total": 30
@@ -179,28 +179,28 @@
     },
     "pan.dob": {
       "accepted_errors": 0,
-      "accepted_total": 15,
+      "accepted_total": 17,
       "accuracy": 1.0,
       "correct": 30,
       "total": 30
     },
     "pan.father_name": {
       "accepted_errors": 0,
-      "accepted_total": 15,
+      "accepted_total": 17,
       "accuracy": 1.0,
       "correct": 30,
       "total": 30
     },
     "pan.name": {
       "accepted_errors": 0,
-      "accepted_total": 15,
+      "accepted_total": 17,
       "accuracy": 0.9,
       "correct": 27,
       "total": 30
     },
     "pan.pan_number": {
       "accepted_errors": 0,
-      "accepted_total": 15,
+      "accepted_total": 17,
       "accuracy": 1.0,
       "correct": 30,
       "total": 30
@@ -213,90 +213,90 @@
     "An ok extraction is not identity authentication, regulatory KYC, account approval, or credit approval."
   ],
   "noisy_documents": 36,
-  "overall_field_accuracy": 0.97381,
+  "overall_field_accuracy": 0.988095,
   "provider": "FakeProvider",
   "statuses": {
     "failed": 0,
-    "needs_review": 36,
-    "ok": 54
+    "needs_review": 31,
+    "ok": 59
   },
   "target_silent_error_rate": 0.02,
   "threshold": 0.5,
   "threshold_selection_note": "lowest tested threshold at or below 2% silent errors",
   "threshold_sweep": [
     {
-      "auto_accepted_documents": 54,
+      "auto_accepted_documents": 59,
       "auto_accepted_documents_with_errors": 0,
-      "auto_accepted_fields": 260,
+      "auto_accepted_fields": 280,
       "failed_documents": 0,
-      "review_rate": 0.380952,
-      "reviewed_documents": 36,
-      "reviewed_fields": 160,
+      "review_rate": 0.333333,
+      "reviewed_documents": 31,
+      "reviewed_fields": 140,
       "silent_error_rate": 0.0,
       "silent_errors": 0,
       "threshold": 0.5,
       "total_fields": 420
     },
     {
-      "auto_accepted_documents": 54,
+      "auto_accepted_documents": 59,
       "auto_accepted_documents_with_errors": 0,
-      "auto_accepted_fields": 260,
+      "auto_accepted_fields": 280,
       "failed_documents": 0,
-      "review_rate": 0.380952,
-      "reviewed_documents": 36,
-      "reviewed_fields": 160,
+      "review_rate": 0.333333,
+      "reviewed_documents": 31,
+      "reviewed_fields": 140,
       "silent_error_rate": 0.0,
       "silent_errors": 0,
       "threshold": 0.6,
       "total_fields": 420
     },
     {
-      "auto_accepted_documents": 54,
+      "auto_accepted_documents": 59,
       "auto_accepted_documents_with_errors": 0,
-      "auto_accepted_fields": 260,
+      "auto_accepted_fields": 280,
       "failed_documents": 0,
-      "review_rate": 0.380952,
-      "reviewed_documents": 36,
-      "reviewed_fields": 160,
+      "review_rate": 0.333333,
+      "reviewed_documents": 31,
+      "reviewed_fields": 140,
       "silent_error_rate": 0.0,
       "silent_errors": 0,
       "threshold": 0.7,
       "total_fields": 420
     },
     {
-      "auto_accepted_documents": 54,
+      "auto_accepted_documents": 59,
       "auto_accepted_documents_with_errors": 0,
-      "auto_accepted_fields": 260,
+      "auto_accepted_fields": 280,
       "failed_documents": 0,
-      "review_rate": 0.380952,
-      "reviewed_documents": 36,
-      "reviewed_fields": 160,
+      "review_rate": 0.333333,
+      "reviewed_documents": 31,
+      "reviewed_fields": 140,
       "silent_error_rate": 0.0,
       "silent_errors": 0,
       "threshold": 0.8,
       "total_fields": 420
     },
     {
-      "auto_accepted_documents": 54,
+      "auto_accepted_documents": 59,
       "auto_accepted_documents_with_errors": 0,
-      "auto_accepted_fields": 260,
+      "auto_accepted_fields": 280,
       "failed_documents": 0,
-      "review_rate": 0.380952,
-      "reviewed_documents": 36,
-      "reviewed_fields": 160,
+      "review_rate": 0.333333,
+      "reviewed_documents": 31,
+      "reviewed_fields": 140,
       "silent_error_rate": 0.0,
       "silent_errors": 0,
       "threshold": 0.9,
       "total_fields": 420
     },
     {
-      "auto_accepted_documents": 54,
+      "auto_accepted_documents": 59,
       "auto_accepted_documents_with_errors": 0,
-      "auto_accepted_fields": 260,
+      "auto_accepted_fields": 280,
       "failed_documents": 0,
-      "review_rate": 0.380952,
-      "reviewed_documents": 36,
-      "reviewed_fields": 160,
+      "review_rate": 0.333333,
+      "reviewed_documents": 31,
+      "reviewed_fields": 140,
       "silent_error_rate": 0.0,
       "silent_errors": 0,
       "threshold": 0.95,

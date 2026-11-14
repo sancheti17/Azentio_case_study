@@ -1,0 +1,30 @@
+{"applicant_id": "app_0001", "as_of": "2026-11-14", "expected_reason_codes": ["NAME_MISMATCH"]}
+{"applicant_id": "app_0002", "as_of": "2026-11-14", "expected_reason_codes": ["DOB_MISMATCH"]}
+{"applicant_id": "app_0003", "as_of": "2026-11-14", "expected_reason_codes": ["PAN_SURNAME_INITIAL_MISMATCH"]}
+{"applicant_id": "app_0004", "as_of": "2026-11-14", "expected_reason_codes": ["ADDRESS_PROOF_STALE"]}
+{"applicant_id": "app_0005", "as_of": "2026-11-14", "expected_reason_codes": ["DOB_MISMATCH", "NAME_MISMATCH"]}
+{"applicant_id": "app_0006", "as_of": "2026-11-14", "expected_reason_codes": ["NAME_MISMATCH", "PAN_SURNAME_INITIAL_MISMATCH"]}
+{"applicant_id": "app_0007", "as_of": "2026-11-14", "expected_reason_codes": ["ADDRESS_PROOF_STALE", "DOB_MISMATCH"]}
+{"applicant_id": "app_0008", "as_of": "2026-11-14", "expected_reason_codes": ["ADDRESS_PROOF_STALE", "PAN_SURNAME_INITIAL_MISMATCH"]}
+{"applicant_id": "app_0009", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0010", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0011", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0012", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0013", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0014", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0015", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0016", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0017", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0018", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0019", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0020", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0021", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0022", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0023", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0024", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0025", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0026", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0027", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0028", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0029", "as_of": "2026-11-14", "expected_reason_codes": []}
+{"applicant_id": "app_0030", "as_of": "2026-11-14", "expected_reason_codes": []}
