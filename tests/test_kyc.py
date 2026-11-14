@@ -317,3 +317,16 @@ def test_source_supported_letter_substitution_is_not_identity_verification():
     result = Pipeline(FakeProvider(), today=TODAY).extract("x", text("pan", {"name":"SPECIMEN NEXERA"}))
     assert result.status == "ok"
     assert result.fields["name"].confidence == 1.0
+
+
+def test_regression_baseline_fixed_subset(tmp_path):
+    """Guard field accuracy on a fixed-seed 30-document synthetic subset."""
+    from kyc.eval import run_evaluation
+    from kyc.config import THRESHOLD_CANDIDATES
+    root = Path(__file__).resolve().parents[1]
+    data = tmp_path / "regression-data"
+    generate(10, 42, data)
+    report = run_evaluation(data / "labels.jsonl", provider="fake", threshold_candidates=THRESHOLD_CANDIDATES)
+    baseline = json.loads((root / "reports" / "baseline.json").read_text(encoding="utf-8"))
+    assert report["documents"] == 30
+    assert report["overall_field_accuracy"] >= baseline["overall_field_accuracy"]

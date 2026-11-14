@@ -2,6 +2,7 @@ import argparse
 import json
 from pathlib import Path
 from .audit import AuditStore
+from .config import DEFAULT_REVIEW_THRESHOLD
 from .models import ExtractRequest
 from .pipeline import Pipeline
 
@@ -9,7 +10,7 @@ from .pipeline import Pipeline
 def main():
     parser = argparse.ArgumentParser(description="Extract a synthetic OCR document; all ID results are masked")
     parser.add_argument("path", type=Path)
-    parser.add_argument("--threshold", type=float, default=0.8)
+    parser.add_argument("--threshold", type=float, default=DEFAULT_REVIEW_THRESHOLD)
     parser.add_argument("--audit-db", default="kyc-audit.sqlite3")
     args = parser.parse_args()
     try:

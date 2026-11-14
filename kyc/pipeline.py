@@ -1,9 +1,11 @@
 import hashlib
 import json
+import re
 import math
 from datetime import date
 from pydantic import ValidationError
 from .audit import AuditStore
+from .config import DEFAULT_REVIEW_THRESHOLD
 from .models import ExtractResponse, FieldResult, SCHEMAS
 from .privacy import mask_id, redact
 from .providers import LLMProvider, get_provider
@@ -52,7 +54,7 @@ def parse_output(raw: str, doc_type: str) -> dict[str, str]:
 
 
 class Pipeline:
-    def __init__(self, provider: LLMProvider | None = None, *, threshold: float = 0.8,
+    def __init__(self, provider: LLMProvider | None = None, *, threshold: float = DEFAULT_REVIEW_THRESHOLD,
                  audit: AuditStore | None = None, today: date | None = None):
         if not math.isfinite(threshold) or not 0 <= threshold <= 1:
             raise ValueError("threshold must be finite and between zero and one")
@@ -141,7 +143,8 @@ class Pipeline:
             if not rule_pass or not supported or corrected or conflict or confidence < self.threshold:
                 needs_review = True
             if field_hashes is not None:
-                field_hashes[field] = hashlib.sha256(value.encode("utf-8")).hexdigest()
+                evaluation_value = re.sub(r"[^0-9]", "", value) if field in {"id_number", "pincode"} else value
+                field_hashes[field] = hashlib.sha256(evaluation_value.encode("utf-8")).hexdigest()
             public_value = mask_id(value) if field == "id_number" else redact(value)
             results[field] = FieldResult(value=public_value, confidence=confidence, reason_codes=reasons)
         status = "needs_review" if needs_review else "ok"
