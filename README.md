@@ -87,7 +87,7 @@ Only evaluation code reads `labels.jsonl`; the pipeline/provider receives OCR te
 
 ### FakeProvider results
 
-Document-type classification: **90/90 (100.00%)**. Overall field accuracy: **409/420 (97.38%)**.
+Document-type classification: **90/90 (100.00%)**. Overall field accuracy: **415/420 (98.81%)**.
 
 | Document type | Field | Correct / total | Accuracy |
 |---|---|---:|---:|
@@ -101,9 +101,9 @@ Document-type classification: **90/90 (100.00%)**. Overall field accuracy: **409
 | id_card | id_number | 30/30 | 100.00% |
 | id_card | name | 29/30 | 96.67% |
 | id_card | pincode | 30/30 | 100.00% |
-| address_proof | address | 25/30 | 83.33% |
+| address_proof | address | 30/30 | 100.00% |
 | address_proof | issue_date | 30/30 | 100.00% |
-| address_proof | name | 28/30 | 93.33% |
+| address_proof | name | 29/30 | 96.67% |
 | address_proof | pincode | 30/30 | 100.00% |
 
 Error breakdown (field errors):
@@ -112,9 +112,9 @@ Error breakdown (field errors):
 |---|---:|
 | missing | 0 |
 | wrong_value | 0 |
-| rule_failed | 11 |
+| rule_failed | 5 |
 | provider_failed | 0 |
-| **Total field errors** | **11** |
+| **Total field errors** | **5** |
 
 ### Threshold sweep and selected default
 
@@ -122,14 +122,15 @@ A document is routed as a unit: if any hard gate fails or any field is below thr
 
 | Threshold | Review rate | Reviewed fields / total | Auto-accepted fields | Silent errors | Silent-error rate |
 |---:|---:|---:|---:|---:|---:|
-| 0.50 | 38.10% | 160/420 | 260 | 0 | 0.00% |
-| 0.60 | 38.10% | 160/420 | 260 | 0 | 0.00% |
-| 0.70 | 38.10% | 160/420 | 260 | 0 | 0.00% |
-| 0.80 | 38.10% | 160/420 | 260 | 0 | 0.00% |
-| 0.90 | 38.10% | 160/420 | 260 | 0 | 0.00% |
-| 0.95 | 38.10% | 160/420 | 260 | 0 | 0.00% |
+| 0.50 | 33.33% | 140/420 | 280 | 0 | 0.00% |
+| 0.60 | 33.33% | 140/420 | 280 | 0 | 0.00% |
+| 0.70 | 33.33% | 140/420 | 280 | 0 | 0.00% |
+| 0.80 | 33.33% | 140/420 | 280 | 0 | 0.00% |
+| 0.90 | 33.33% | 140/420 | 280 | 0 | 0.00% |
+| 0.95 | 33.33% | 140/420 | 280 | 0 | 0.00% |
 
-**Chosen threshold: 0.50** — the lowest tested value with silent-error rate at or below 2%. It reviews 38.10% of fields; higher thresholds route more work to review, while hard safety gates apply independently of confidence.
+**Chosen threshold: 0.50** — the lowest tested value with silent-error rate at or below 2%. It reviews 33.33% of fields; harder thresholds did not improve the observed silent-error rate in this synthetic sample.
+
 
 ### Regression gate and limits
 
@@ -155,3 +156,32 @@ When running from the repository root, no editable installation is necessary. Fo
 ## Privacy and production boundaries
 
 No application logger records OCR, full IDs, provider responses, retry values or credentials. API validation errors are replaced by a safe error instead of FastAPI's usual echoed inputs. IDs are masked before all result serialization and audit storage, including defensive redaction in wrong fields/doc IDs. Do not enable reverse-proxy body logging or provider HTTP debug tracing. The authorized synthetic files/labels necessarily contain synthetic full IDs; these are test fixtures, not application logs. Other KYC fields remain sensitive: this prototype does not supply encryption at rest, access control, retention enforcement, immutable audit storage, rate limits, upload limits at the gateway, TLS deployment, production observability, or a human-review UI. Keep it bound to localhost and use synthetic data only.
+
+
+## Applicant-level verification and human review
+
+The `python -m kyc.generate --applicants 30 --seed 42 --out data/` command now writes `data/applicants.jsonl` alongside the 90 OCR documents and `labels.jsonl`. It records a fixed `as_of` date (`2026-11-14`) and expected cross-document reason codes. Eight of the 30 synthetic applicants are deliberately inconsistent; the remaining clean applicants have matching names and dates, a PAN 5th character matching the final name token's initial, and an address-proof issue date no more than 90 days before `as_of`. Synthetic noise is still included; all values remain conspicuously fictional.
+
+`POST /v1/applicants/{applicant_id}/verify` accepts an `as_of` ISO date and exactly three `{doc_id,text}` documents. It runs the existing Task-1 pipeline for each, then checks the extracted fields without involving the provider:
+
+- `NAME_MISMATCH`: normalize case/punctuation/whitespace, compare tokens without regard to order, and allow one-character initials; maximum token-match similarity must be **at least 0.80** for each pair of available names.
+- `DOB_MISMATCH`: PAN and ID-card dates differ after ISO normalization.
+- `PAN_SURNAME_INITIAL_MISMATCH`: PAN character 5 (one-based) differs from the first character of the last normalized name token.
+- `ADDRESS_PROOF_STALE`: issue date is **more than 90 days** before `as_of` (exactly 90 days is not stale).
+
+The response includes all document extraction results (ID fields are masked), all reason codes, the applicant decision, and a review item ID when applicable. Any field below the configured Task-2 threshold (`KYC_THRESHOLD`, default **0.50** from the synthetic sweep), any field rule failure, extraction failure, incomplete document set, or cross-document code routes to `REVIEW`. **No automated reason code causes `REJECT`**: a mismatch or stale document is a serious review signal, but alone does not prove fraud. `REJECT` is available only as an authorized reviewer's adjudicated resolution; the reviewer may instead resolve as `AUTO_APPROVE`.
+
+Review queue usage:
+
+```sh
+curl 'http://127.0.0.1:8000/v1/review-items?status=open'
+curl -X POST 'http://127.0.0.1:8000/v1/review-items/1/resolve' \
+  -H 'Content-Type: application/json' \
+  -d '{"reviewer":"reviewer-1","decision":"REJECT","corrected_fields":{"app_0001_pan":{"name":"SPECIMEN NEXORA A"}}}'
+```
+
+`corrected_fields` maps a submitted `doc_id` to corrected field/value pairs. Only corrected documents are appended to `data/corrections.jsonl`, one JSONL row each, using the label shape `{doc_id, applicant_id, doc_type, fields}`. Corrections are labelled data and may contain the corrected values; keep that file access-controlled. Resolving an item twice returns HTTP 409.
+
+Every applicant decision and resolution is recorded in the append-only SQLite `applicant_audit` table with UTC timestamp, actor, applicant ID, decision, reason codes, and event type. The queue stores field names/confidence/reasons and document metadata, not OCR or extracted values. Full 12-digit IDs are masked in applicant audit and application logs; per-document decision records likewise contain masked fields. This demonstration does not establish identity authenticity, and synthetic test measurements are not production fraud-risk estimates.
+
+The direct check function is `kyc.cross_checks.cross_document_reason_codes(fields_by_type, as_of)` and has a provider-free ground-truth regression test. Run `python -m pytest -q` for the suite; it blocks network access and uses only the deterministic fake provider.
