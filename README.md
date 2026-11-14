@@ -1,8 +1,9 @@
 # Azentio_case_study
 Build an LLM-backed eKYC pipeline that extracts and validates identity fields from KYC documents, measures its own field-level accuracy, and routes uncertain cases to a human reviewer.
+
 # SPECIMEN KYC — offline-first extraction demonstration
 
-Python 3.10+ package `kyc` for one-document OCR extraction. No real people or identity records are used. **`ok` means the extraction gate passed; it is not identity authentication, regulatory KYC approval, account approval, or a loan decision.** This Task 1 implementation is not production-ready or a substitute for Task 2 calibration.
+Python 3.10+ package `kyc` for one-document OCR extraction. No real people or identity records are used. **`ok` means the extraction gate passed; it is not identity authentication, regulatory KYC approval, account approval, or a loan decision.** Its synthetic evaluation is a development check, not production validation or calibrated fraud-risk evidence.
 
 ## Setup and commands
 
@@ -14,18 +15,18 @@ python -m venv .venv
 . .venv/bin/activate
 # Windows PowerShell: .venv\Scripts\Activate.ps1
 python -m pip install -e '.[test]'
-python3.12 -m venv /tmp/kyc-venv312
-source /tmp/kyc-venv312/bin/activate
-python -m pip install -e '.[test]'
-python -m pytest -q
-python -m kyc.generate --applicants 30 --seed 42 --out new-data/
+pytest -q
+python -m kyc.generate --applicants 30 --seed 42 --out data/
+python -m kyc.extract data/app_0001_pan.txt
+python -m kyc.extract data/app_0001_id_card.txt --threshold 0.9 --audit-db decisions.sqlite3
+python -m uvicorn kyc.api:app --host 127.0.0.1 --port 8000
 ```
 
 Generation refuses a nonempty output directory to prevent overwrites or stale files; use another empty path for each run. If the distribution includes sample `data/`, use `--out new-data/`.
 
 POST `http://127.0.0.1:8000/v1/documents/extract` with JSON `{ "doc_id": "application-1", "text": "<OCR text>" }`. OpenAPI is at `/docs`. The response has `doc_id`, `doc_type`, `status` (`ok`, `needs_review`, `failed`), and `fields`; each field has `value`, `confidence`, `reason_codes`. Failed responses also contain a safe `error`. Unknown document type has JSON `doc_type: null`, and failed responses always retain an empty `fields` object. No original ID is returned: a valid-shaped ID is `XXXXXXXX` plus its final four digits; invalid-shaped IDs are completely masked. CLI emits the same JSON and exits 0 for ok/review, 1 for failed, 2 for input/configuration failure. CLI defaults doc_id to the filename stem.
 
-The API writes SQLite audit decisions to `kyc-audit.sqlite3` by default. Configure `KYC_AUDIT_DB` and `KYC_THRESHOLD` for the API; the CLI uses `--audit-db` and `--threshold`. Threshold defaults to **0.8**. Library usage is `Pipeline(FakeProvider(), threshold=0.8, audit=AuditStore('decisions.sqlite3')).extract(doc_id, text)`. Tests use isolated temporary paths, no environment variables, and block outbound IPv4/IPv6 socket connections. Installing dependencies may require a one-time download; running the fake, generator, tests and evaluation requires no service or network.
+The API writes SQLite audit decisions to `kyc-audit.sqlite3` by default. Configure `KYC_AUDIT_DB` and `KYC_THRESHOLD` for the API; the CLI uses `--audit-db` and `--threshold`. Threshold defaults to **0.50**, selected from the committed fake-provider sweep (or the documented highest-threshold fallback if none meets the target). `kyc/config.py` is the source used by API, CLI and library. Library usage is `Pipeline(FakeProvider(), audit=AuditStore('decisions.sqlite3')).extract(doc_id, text)`. Tests use isolated temporary paths and no environment variables; fake evaluation requires no service or network.
 
 ## Structure and design
 
@@ -76,44 +77,65 @@ For already-installed local Ollama, set `KYC_PROVIDER=ollama`, `KYC_MODEL=llama3
 
 ## Evaluation and results
 
+Run the offline fake-provider evaluation over every document listed in the labels file:
+
 ```sh
-python -m kyc.evaluate --data data/ --threshold 0.8 --out reports/evaluation.json
+python -m kyc.eval --labels data/labels.jsonl --provider fake --out reports/
 ```
 
-The report includes accuracy numerator/denominator per document-type/field, accepted-field errors, accepted-document errors, review counts and explicit accepted-field/document error-rate denominators. **Complete canonical IDs are compared**, not only their last four digits: the evaluator uses a private in-memory field-hash hook from the exact pipeline run, compares hashes with canonical labels, then discards them. Neither raw identity values nor hashes are written to reports. HTTP/CLI/audit remain masked. This is evaluation-only access to the synthetic ground truth; the provider itself never reads labels.
+Only evaluation code reads `labels.jsonl`; the pipeline/provider receives OCR text only. Full normalized values are compared via private in-memory hashes and no extracted values or IDs are stored in reports. Scoring normalizes names/addresses by case and whitespace, dates to ISO, and IDs/pincodes to digits only. The evaluation date is frozen at `2026-11-14` for repeatable future-date rules. `reports/eval.json` and `reports/eval.md` are the canonical current reports.
 
-Verified on Linux/CPython 3.13: **64 tests passed**, including network-blocked FakeProvider paths, retry failures, all schemas, date/rule cases, byte-identical generation, CLI, API masking and SQLite auditing. See `reports/pytest.txt`, `reports/verification.json` and `reports/evaluation.json`.
+### FakeProvider results
 
-With `--applicants 30 --seed 42` and threshold **0.8**:
+Document-type classification: **90/90 (100.00%)**. Overall field accuracy: **409/420 (97.38%)**.
 
-| Document type / field | Exact canonical correctness | Accuracy | Errors accepted without review |
-|---|---:|---:|---:|
-| pan.name | 27/30 | 90.00% | 0 |
-| pan.father_name | 30/30 | 100.00% | 0 |
-| pan.dob | 30/30 | 100.00% | 0 |
-| pan.pan_number | 30/30 | 100.00% | 0 |
-| id_card.name | 29/30 | 96.67% | 0 |
-| id_card.dob | 30/30 | 100.00% | 0 |
-| id_card.gender | 30/30 | 100.00% | 0 |
-| id_card.id_number (complete value) | 30/30 | 100.00% | 0 |
-| id_card.address | 30/30 | 100.00% | 0 |
-| id_card.pincode | 30/30 | 100.00% | 0 |
-| address_proof.name | 28/30 | 93.33% | 0 |
-| address_proof.address | 25/30 | 83.33% | 0 |
-| address_proof.pincode | 30/30 | 100.00% | 0 |
-| address_proof.issue_date | 30/30 | 100.00% | 0 |
+| Document type | Field | Correct / total | Accuracy |
+|---|---|---:|---:|
+| pan | dob | 30/30 | 100.00% |
+| pan | father_name | 30/30 | 100.00% |
+| pan | name | 27/30 | 90.00% |
+| pan | pan_number | 30/30 | 100.00% |
+| id_card | address | 30/30 | 100.00% |
+| id_card | dob | 30/30 | 100.00% |
+| id_card | gender | 30/30 | 100.00% |
+| id_card | id_number | 30/30 | 100.00% |
+| id_card | name | 29/30 | 96.67% |
+| id_card | pincode | 30/30 | 100.00% |
+| address_proof | address | 25/30 | 83.33% |
+| address_proof | issue_date | 30/30 | 100.00% |
+| address_proof | name | 28/30 | 93.33% |
+| address_proof | pincode | 30/30 | 100.00% |
 
-- **90 documents**, 36 noisy (40%); 420 total fields; 409/420 exact (97.38%).
-- **54/90 `ok` (60% coverage)**, 36/90 `needs_review` (40%), zero failed.
-- **0/54 accepted documents with an observed field error**, and **0/260 accepted-field errors**. All 11 observed field errors are among reviewed documents. 26 reviewed documents had no final field error: conservative review includes correctly repaired OCR.
-- The illustrative one-sided 95% zero-error binomial upper bound for 0/54 is **5.40%**, not 0%. Even this bound is not a valid real-bank population guarantee: documents are correlated by applicant, data is synthetic and this is a development set.
-- Thresholds 0, 0.8, 0.9 and 1.0 gave the same decisions (`reports/threshold-sweep.json`): clean fields score 1.0 and extra safety gates dominate this dataset. Thus no numerical threshold has been calibrated or optimized here; 0.8 remains the specified provisional default.
+Error breakdown (field errors):
 
-**Development transparency:** the initial in-sample run, before generic suspicious-text review, had 61 accepted documents and 7 accepted documents containing 8 erroneous fields. `reports/development-baseline.json` preserves those counts. This exposed a weakness in relying on source matching. Generic name/address anomaly gates were added and retested, producing the final results above. Because the same development set informed that change, the improved results are **not held-out validation**. The baseline is historical evidence, not a report reproducible from the final rule version.
+| Category | Count |
+|---|---:|
+| missing | 0 |
+| wrong_value | 0 |
+| rule_failed | 11 |
+| provider_failed | 0 |
+| **Total field errors** | **11** |
 
-The default threshold remains **0.8 and uncalibrated**, not a threshold selected to meet a bank risk target. The synthetic generator and fake share simple label conventions, so even 100% on this set would not establish real-world accuracy. Source-supported text errors with no conspicuous anomaly can still confidently escape (for example an all-letter substitution in a name). A regression test deliberately demonstrates this limitation. Never infer identity correctness from source agreement or a passing format rule.
+### Threshold sweep and selected default
 
-Before a bank enables straight-through onboarding, Task 2 must add independently generated/held-out, applicant-disjoint challenge data; predeclared risk targets and confidence intervals; precision/coverage vs threshold; name/DOB/address comparisons across all documents; identity-authenticity checks; calibrated confidence for the actual production provider; and routing/appeal controls. This single-document Task 1 API does **not** perform applicant-bundle matching or certify regulatory compliance. The small sample and correlated documents are not independent estimates of fraud risk; any zero-error binomial bound printed is illustrative only.
+A document is routed as a unit: if any hard gate fails or any field is below threshold, all of its fields count as reviewed. Review rate is reviewed fields / all fields; silent-error rate is wrong auto-accepted fields / all auto-accepted fields.
+
+| Threshold | Review rate | Reviewed fields / total | Auto-accepted fields | Silent errors | Silent-error rate |
+|---:|---:|---:|---:|---:|---:|
+| 0.50 | 38.10% | 160/420 | 260 | 0 | 0.00% |
+| 0.60 | 38.10% | 160/420 | 260 | 0 | 0.00% |
+| 0.70 | 38.10% | 160/420 | 260 | 0 | 0.00% |
+| 0.80 | 38.10% | 160/420 | 260 | 0 | 0.00% |
+| 0.90 | 38.10% | 160/420 | 260 | 0 | 0.00% |
+| 0.95 | 38.10% | 160/420 | 260 | 0 | 0.00% |
+
+**Chosen threshold: 0.50** — the lowest tested value with silent-error rate at or below 2%. It reviews 38.10% of fields; higher thresholds route more work to review, while hard safety gates apply independently of confidence.
+
+### Regression gate and limits
+
+`reports/baseline.json` sets the floor for overall field accuracy on a fixed seed-42 subset of 10 applicants / 30 documents. Run `python -m pytest tests/test_kyc.py::test_regression_baseline_fixed_subset -q`; the test regenerates that subset and fails if accuracy falls below baseline. To check the guard, temporarily raise `overall_field_accuracy` above the measured subset accuracy in `reports/baseline.json`, rerun that test and confirm it fails, then restore the committed value.
+
+Two consecutive full eval runs produce identical report bytes. These synthetic in-sample numbers are not held-out calibration, population fraud-risk estimates, identity authentication, or evidence for automatic account/loan approval. No real provider was run.
 
 ## Fully offline distribution option
 

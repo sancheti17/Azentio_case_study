@@ -1,0 +1,8 @@
+{
+  "applicants": 10,
+  "description": "Regression floor measured on a fixed seed-42 10-applicant subset; aggregate accuracy only.",
+  "documents": 30,
+  "overall_field_accuracy": 0.964286,
+  "provider": "FakeProvider",
+  "seed": 42
+}

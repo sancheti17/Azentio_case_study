@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from .audit import AuditStore
+from .config import DEFAULT_REVIEW_THRESHOLD
 from .models import ExtractRequest, ExtractResponse
 from .pipeline import Pipeline
 
@@ -22,7 +23,7 @@ def create_app(pipeline: Pipeline | None = None) -> FastAPI:
         service = app.state.pipeline
         if service is None:
             try:
-                service = Pipeline(threshold=float(os.getenv("KYC_THRESHOLD", "0.8")),
+                service = Pipeline(threshold=float(os.getenv("KYC_THRESHOLD", str(DEFAULT_REVIEW_THRESHOLD))),
                                    audit=AuditStore(os.getenv("KYC_AUDIT_DB", "kyc-audit.sqlite3")))
             except Exception:
                 result = ExtractResponse(doc_id="unavailable", doc_type=None, status="failed", error="CONFIGURATION_ERROR")

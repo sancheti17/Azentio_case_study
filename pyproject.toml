@@ -15,7 +15,7 @@ test = ["pytest==8.3.5", "httpx==0.28.1"]
 [project.scripts]
 kyc-extract = "kyc.extract:main"
 kyc-generate = "kyc.generate:main"
-kyc-evaluate = "kyc.evaluate:main"
+kyc-evaluate = "kyc.eval:main"
 
 [tool.setuptools.packages.find]
 include = ["kyc*"]
