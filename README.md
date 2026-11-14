@@ -185,3 +185,9 @@ curl -X POST 'http://127.0.0.1:8000/v1/review-items/1/resolve' \
 Every applicant decision and resolution is recorded in the append-only SQLite `applicant_audit` table with UTC timestamp, actor, applicant ID, decision, reason codes, and event type. The queue stores field names/confidence/reasons and document metadata, not OCR or extracted values. Full 12-digit IDs are masked in applicant audit and application logs; per-document decision records likewise contain masked fields. This demonstration does not establish identity authenticity, and synthetic test measurements are not production fraud-risk estimates.
 
 The direct check function is `kyc.cross_checks.cross_document_reason_codes(fields_by_type, as_of)` and has a provider-free ground-truth regression test. Run `python -m pytest -q` for the suite; it blocks network access and uses only the deterministic fake provider.
+
+## Clean-container test contract
+
+The standard command `python -m pytest -q` (or `pytest -q`) runs the offline unit and regression suite. It uses the deterministic `FakeProvider`; the suite does not require network access, Docker, a broker, or an external database server. The audit/review tests use Python's standard-library SQLite with temporary local files, so there is no database service to start. Install the declared test extra first with `python -m pip install -e ".[test]"`.
+
+Any test that requires Docker, Testcontainers, or a live external service must be marked `@pytest.mark.integration`. The `integration` marker is registered in `pyproject.toml` and excluded by default. To run only those tests explicitly (after starting/installing their required services), use `python -m pytest -o addopts=-ra -m integration`. There are currently no integration-marked tests in this repository.

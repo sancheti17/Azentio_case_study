@@ -22,4 +22,7 @@ include = ["kyc*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra"
+addopts = "-ra -m 'not integration'"
+markers = [
+	"integration: requires Docker, Testcontainers, or live external services (excluded from the default unit-test run)",
+]
