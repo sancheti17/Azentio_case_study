@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "specimen-kyc"
+version = "0.1.0"
+description = "Offline-first, auditable synthetic KYC extraction demonstration"
+requires-python = ">=3.10"
+dependencies = ["fastapi==0.115.12", "pydantic==2.11.3", "uvicorn==0.34.2"]
+
+[project.optional-dependencies]
+test = ["pytest==8.3.5", "httpx==0.28.1"]
+
+[project.scripts]
+kyc-extract = "kyc.extract:main"
+kyc-generate = "kyc.generate:main"
+kyc-evaluate = "kyc.evaluate:main"
+
+[tool.setuptools.packages.find]
+include = ["kyc*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
